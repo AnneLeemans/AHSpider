@@ -1,64 +1,72 @@
-from tkinter import *
-
-# def firstClick(event):
-#     print('awsome it worked')
-
-# root = Tk()
-# topFrame = Frame(root)
-# topFrame.pack(side = TOP)
-# bottomFrame = Frame(root)
-# bottomFrame.pack(side = BOTTOM)
-# button1 = Button(root, text = 'Start', fg = 'red')
-# button1.bind('<Button-1>', firstClick)
-# button2 = Button(topFrame, text = 'Wait', fg = 'green')
-# button3 = Button(root, text = 'Stop', fg = 'purple')
-
-# button1.pack(side = LEFT)
-# button2.pack(side = LEFT)
-# button3.pack(side = LEFT)
-
-# labelOne = Label(root, text = 'Hello', bg = 'white', fg = 'blue')
-# labelOne.pack(fill=X, side = TOP)
-
-# labelTwo = Label(root, text = 'Hello', bg = 'black', fg = 'yellow')
-# labelTwo.pack(fill=Y, side = RIGHT)
-
-
-# root.mainloop()
 
 
 class firstClass:
 
-    def __init__(self, master, msg):          
-        topFrame = Frame(master)
-        topFrame.pack(side = TOP)
+    def __init__(self):
+        self.root = Tk()
+        self.root.lift()
+        self.root.wm_title('AH Scraper')
+        self.root.geometry('400x150+470+350')
 
-        bottomFrame = Frame(master)
-        bottomFrame.pack(side = BOTTOM)
+        self.topFrame = Frame(self.root)
+        self.topFrame.pack(side = TOP)
 
-        self.printButton = Button(topFrame, text = 'Print something', command = self.printMessage(msg), bg = 'black', fg = 'yellow')
+        self.bottomFrame = Frame(self.root)
+        self.bottomFrame.pack(side = BOTTOM)
+
+        self.dropdownTitle = StringVar(self.root)       
+        self.dropdownTitle.set('AH Category')
+        
+        self.dropDown = OptionMenu(self.bottomFrame, self.dropdownTitle, 'agf',
+                                                'kant_klaar',
+                                                'protein',
+                                                'kaas_vlees',
+                                                'zuivel',
+                                                'bakkerij',
+                                                'ontbijt',
+                                                'frisdrank',
+                                                'wijn',
+                                                'bier',
+                                                'pasta_rijst',
+                                                'conserve',
+                                                'snoep_chips',
+                                                'diepvries',
+                                                'drogist',
+                                                'bewuste_voeding',
+                                                'huishouden',
+                                                'non_food')
+        self.dropDown.config(font=("Verdana", 11))
+        self.dropDown.grid(row=10,column=0,sticky='nsew',)                                        
+        self.dropDown.pack(side = LEFT)
+        self.dropDown.focus_set()
+
+        self.showDropdown = Label(self.topFrame, text= 'Albert Heijn scraper choose your category\n', 
+            font = ('Veranda', 14))
+        self.showDropdown.pack(side = TOP)
+
+        self.printButton = Button(self.bottomFrame, text = '\nStart Scraper\n', command = self.printMessage,\
+            font = ('Veranda', 11), bg = 'ivory')
         self.printButton.pack(fill = Y, side = LEFT)
 
-        self.quitButtton = Button(topFrame, text = 'Quit apllications', command = exit(), bg = 'yellow', fg = 'black')
-        self.quitButtton.pack(fill = Y, side = LEFT)
 
-    def printMessage(self, msg):
-        print(msg)
+    def printMessage(self):
+        self.outputMessage = self.dropdownTitle.get()
+        self.root.destroy()
+
+    def waitForInput(self):
+        self.root.mainloop()
+
+    def getString(self):
+        return self.outputMessage
+
+    def quitApplication(self):
+        self.outputMessage = 'Application quit without results'
+        self.root.destroy()
     
-    def takeInput(self, inputMessage):
-        print('lala')
-        
-    
 
+def getDropdownValue():
+    output = firstClass()
+    output.waitForInput()
+    return output.getString()
 
-def run_firstClass():
-      root = Tk()
-      b = firstClass(root, 'Awsome it works!')
-      root.lift()
-      root.wm_title("Albert Heijn Spider")
-      root.geometry('620x180+470+350')
-      root.mainloop()
-
-      
-
-run_firstClass()
+getDropdownValue()
