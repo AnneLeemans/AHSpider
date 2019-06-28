@@ -5,6 +5,93 @@ import pandas as pd
 from lxml import html
 import time
 
+#---------- Create drop downs 
+#To get the selected option, use get on the variable:
+import tkinter as tk
+from tkinter import *
+from tkinter import StringVar
+
+ def gettext(inputs):
+        string = get(inputs)
+        print(string)
+       
+
+
+root = Tk()
+menu = Menu(root)
+subMenu = Menu(menu)
+menu.add_cascade(label='Categorie', menu=subMenu)
+subMenu.add_command(label='Sub_cat' , command = gettext)
+subMenu.add_seperator()
+subMenu.add_command(label='Exit' , command = print('Hello'))
+
+root.mainloop()
+
+
+class takeInput(object):
+
+    def __init__(self,requestMessage):
+        self.root = Tk()
+        self.root.lift()
+        self.root.wm_title("Welcome to the forecasttool")
+        self.root.geometry('620x180+470+350')
+        self.string = ''
+        self.frame = Frame(self.root)
+        self.frame.pack()
+        self.acceptInput(requestMessage)
+        self.variable = StringVar(self.root)
+        self.variable.set('kant_klaar')
+        self.variable.pack()
+
+    def acceptInput(self,requestMessage):
+        r = self.frame
+        var = self.variable 
+        k = Label(r,text=requestMessage, font=("Verdana", 16), fg="Green")
+        k.pack(side='top')
+        self.e = OptionMenu(r, var, 'agf',
+                                                'kant_klaar',
+                                                'protein',
+                                                'kaas_vlees',
+                                                'zuivel',
+                                                'bakkerij',
+                                                'ontbijt',
+                                                'frisdrank',
+                                                'wijn',
+                                                'bier',
+                                                'pasta_rijst',
+                                                'conserve',
+                                                'snoep_chips',
+                                                'diepvries',
+                                                'drogist',
+                                                'bewuste_voeding',
+                                                'huishouden',
+                                                'non_food'
+                                            )
+        self.e.pack()
+        self.e.focus_set()
+        b = Button(r,text='Start',command=self.gettext, font=("Verdana", 16), fg="#f0f6da", bg='green')
+        b.pack(side='right')
+
+
+    def gettext(self):
+        self.string = self.var.get()
+        self.root.lift()
+        self.root.destroy()
+
+    def getString(self):
+        return self.string
+
+    def waitForInput(self):
+        self.root.mainloop()
+
+def getText(requestMessage):
+    msgBox = takeInput(requestMessage)
+    #loop until the user makes a decision and the window is destroyed
+    msgBox.waitForInput()
+    return msgBox.getString()
+
+
+
 
 # ------- Create defenitions for scraper -------
 # list product urls
