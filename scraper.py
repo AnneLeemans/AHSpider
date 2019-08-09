@@ -1,3 +1,4 @@
+
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import requests
@@ -5,6 +6,7 @@ import pandas as pd
 from lxml import html
 import time
 from tkinter import *
+import numpy as np
 
 
 class firstClass:
@@ -106,16 +108,15 @@ def ah_product_group(table):
     return extension
 
 
-def navigate_to_url(url):
+def open_connection():
     drv = webdriver.Firefox()  # op webdriver
     drv.implicitly_wait(30)
-    drv.get(url)
 
     return drv
 
 
-def get_all_links(drv):
-    alllinks = drv.find_elements_by_tag_name("a")
+def get_all_links():
+    alllinks = driver.find_elements_by_tag_name("a")
     links = [alllinks[0].get_attribute('href')]
     for x in range(1, len(alllinks)):
         links.append(alllinks[x].get_attribute('href'))
@@ -123,8 +124,8 @@ def get_all_links(drv):
     return links
 
 
-def clean_data_for_scrape(drv):
-    ah_urls = get_all_links(drv)
+def clean_data_for_scrape():
+    ah_urls = get_all_links(driver)
     ahurls_df = pd.DataFrame(ah_urls)
     ahurls_df['url'] = ahurls_df[0].str.extract('(.*?ah.nl/producten/.*)')
     ahurls_df['remove'] = ahurls_df['url'].str.count('/')
@@ -136,13 +137,14 @@ def clean_data_for_scrape(drv):
     return urls
 
 
-def get_page_with_products(drv, url, x):
-    driver.get(url[x])
+
+def get_page_with_products_str(url):
+    driver.get(url)
     driver.implicitly_wait(30)
-    time.sleep(2)
-    product_link = get_all_links(drv)
+    time.sleep(3)
+    product_link = get_all_links(driver)
     product_link_df = pd.DataFrame(product_link)
-    product_link_df['url'] = product_link_df[0].str.extract('(.*' + url[x] + '.*)')
+    product_link_df['url'] = product_link_df[0].str.extract('(.*' +  url + '.*)')
     product_link_df = product_link_df.dropna()
     product_link_df.drop_duplicates(subset='url', inplace=True)
     product_link_df['remove'] = product_link_df['url'].str.extract('(kenmerk=|bonus)')
@@ -150,22 +152,41 @@ def get_page_with_products(drv, url, x):
     products_urls_fin = product_link_df['url'].tolist()
 
     return products_urls_fin
+  
 
 
-def load_pages(drv, url):
-    list = []
-    for x in range(0, len(url)):
+def get_page_with_products_list(url):
+    driver.get(url)
+    driver.implicitly_wait(30)
+    time.sleep(3)
+    product_link = get_all_links(driver)
+    product_link_df = pd.DataFrame(product_link)
+    product_link_df['url'] = product_link_df[0].str.extract('(.*' + url + '.*)')
+    product_link_df = product_link_df.dropna()
+    product_link_df.drop_duplicates(subset='url', inplace=True)
+    product_link_df['remove'] = product_link_df['url'].str.extract('(kenmerk=|bonus)')
+    product_link_df = product_link_df[pd.isnull(product_link_df['remove'])]
+    products_urls_fin = product_link_df['url'].tolist()
+
+    return products_urls_fin
+   
+
+
+
+def load_pages(urls):
+    url_list = []
+    for x in urls:
         try:
-            temp_list = get_page_with_products(drv, url, x)
-            list = list + temp_list
+            temp_list = get_page_with_products_list(x)
+            url_list = url_list + temp_list
         except:
-            print('line ' + str(x) + ' skipped: ' + url[x])
+            print('url skipped: ' + x)
 
-    return list
+    return url_list
 
 
-def get_product_urls(url, x):
-    driver.get(url[x])
+def get_product_urls(url):
+    driver.get(url)
     driver.implicitly_wait(30)
     time.sleep(2)
     fin_product_url = get_all_links(driver)
@@ -178,14 +199,14 @@ def get_product_urls(url, x):
     return fin_product_url
 
 
-def get_final_product_urls(string):
+def get_final_product_urls(urls):
     list_fin_product_url = []
-    for x in range(0, len(string)):
+    for x in urls:
         try:
-            temp_list = get_product_urls(string, x)
+            temp_list = get_product_urls(x)
             list_fin_product_url = list_fin_product_url + temp_list
         except:
-            print('line ' + str(x) + ' skipped: ' + string[x])
+            print('url skipped: ' + x)
 
     return list_fin_product_url
 
@@ -225,26 +246,28 @@ def product_info_to_dataframe(urls):
 # --------------------------------------------- Run AH scraper ---------------------------------------------------------
 
 def runScraper():
-    cat = getDropdownValue()
-    driver = navigate_to_url("https://www.ah.nl/producten")
-    time.sleep(3)
+cat = getDropdownValue()
+driver = open_connection()
+time.sleep(3)
 
-    # get links where products are located
-    list_sub_cat = load_pages(driver, [ah_product_group(cat)])
-    list_sub_sub_cat = load_pages(driver, list_sub_cat)
-    list_sub_sub__sub_cat = load_pages(driver, list_sub_sub_cat)
+# get links where products are located
+list_sub_cat = get_page_with_products_str(ah_product_group(cat))
+list_sub_sub_cat = load_pages(list_sub_cat)
+list_sub_sub__sub_cat = load_pages(list_sub_sub_cat)
 
-    # create list with all urls
-    final_url_forproduct_search = list_sub_cat + list_sub_sub_cat + list_sub_sub__sub_cat
-    final_url_forproduct_search =  list(dict.fromkeys(final_url_forproduct_search))
+# create list with all urls
+final_url_forproduct_search = list_sub_cat + list_sub_sub_cat + list_sub_sub__sub_cat
 
-    # get urls of products
-    final_product_urls = get_final_product_urls(final_url_forproduct_search)
+# get urls of products
+final_product_urls = get_final_product_urls(final_url_forproduct_search)
 
-    # get product info
-    ah_products = product_info_to_dataframe(final_product_urls)
+# get product info
+ah_products = product_info_to_dataframe(final_product_urls)
 
     return ah_products
+
+
+brood = runScraper()
 
 # to disc
 ah_products.to_csv('G:/My Drive/NL - 15 - Procurement/Persoonlijk/Anne/Tools/Scraper/ah_products.csv', sep = ';', header = True, index = False)
