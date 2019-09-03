@@ -9,6 +9,13 @@ import requests
 import time
 import math
 import numpy as np
+import requests as requests
+from urllib.parse import urlparse as urlparse
+from xml.etree import ElementTree as ElementTree
+from appiepy import Product
+from pprint import pprint
+
+
 
 def load_odata_filter(filter_table, to_filter, filter_column):
     filter_string = ('%27%20or%20'+ to_filter + '%20eq%20%27').join(filter_table[str.lower(filter_column)])
@@ -88,37 +95,6 @@ def clean_urls_for_scraper(table):
     return df2
 
 
-def product_info_to_dataframe(df):
-    df['title'] = 'product not found'
-    df['ahprice'] = 'product not found'
-    df['portiegrote'] = 'product not found'
-    df['ahsku'] = 'product not found'
-
-    for x in range(0, len(df)):
-        try:
-            content = requests.get(df['url'][x])
-            tree = html.fromstring(content.text)
-            df['title'][x] = \
-                tree.xpath('//*[@id="app"]/article/div[2]/div/div/div/article/div/div/div[2]/div[1]/h1/span//text()')[0]
-            df['ahprice'][x] = \
-                tree.xpath('//*[@id="app"]/article/div[2]/div/div/div/article/div/div/div[2]/div[2]/div[1]/div/span[1]//text()')[
-                    0] + ',' + \
-                tree.xpath(
-                    '//*[@id="app"]/article/div[2]/div/div/div/article/div/div/div[2]/div[2]/div[1]/div/span[3]//text()')[
-                    0]
-            df['portiegrote'][x] = \
-                tree.xpath('//*[@id="app"]/article/div[3]/div/div[1]/div[1]/div[1]/div[2]/p//text()')[0]
-            df['ahsku'][x] = \
-                tree.xpath('//*[@id="app"]/article/div[3]/div/div[2]/div/p/text()')[0]
-        except:
-            print('product not found')
-
-    df.sort_values('ahprice', ascending=True, inplace = True)
-    df.drop_duplicates(subset = 'ahsearch', keep = 'first', inplace = True)
-
-    return df
-
-
 
 def get_ah_hf_products(table):    
     search_skus = create_search_fields(table)
@@ -146,13 +122,72 @@ def load_sku_info(table):
     return skus
 
 hf_skus = get_sku_for_weeks(51, 52, 'classic-box')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Load week products
 ah_hf_products = get_ah_hf_products(hf_skus)
+
+## get merge file
+ah_sku_url = ah_hf_products[['skucode', 'url']]
+clean_urls = ah_hf_products[['ahsearch', 'url']].drop_duplicates()
+clean_urls.reset_index(inplace = True)
+clean_urls.drop('index', axis = 1, inplace = True)
+
+
+
+
+
+
+
+
+
+ah_product_info = product_info_to_dataframe_fin(clean_urls)
+
+
+
+
+
+
 sku_info = load_sku_info(hf_skus)
 
-ah_sku_url = ah_hf_products[['skucode', 'url']]
+
+
+
+
 ah_sku_url.dropna(inplace = True)
 
+
+
+
 #this is where you want to save all you skus with urls in the data warehouse for later use 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -224,6 +259,8 @@ week_reipce_ah = week_recipe.merge(sku_info, how = 'inner', left_on = 'skucode',
     merge(ah_sku_price, how = 'left', left_on = 'skucode', right_on = 'skucode')
 
 
+
+
 week_reipce_ah['unit_type'] = week_reipce_ah['skuname'].str.extract('(st\)|g\))')
 week_reipce_ah['unit_type'] = week_reipce_ah['unit_type'].str.replace(')','')
 week_reipce_ah['unit_type_ah'] = week_reipce_ah['portiegrote'].str.extract('([A-z]{1,40})')
@@ -261,7 +298,7 @@ recipe_price = week_reipce_ah[[
 recipe_price = recipe_price.groupby(['hf_week', 'slot']).sum()
 recipe_price.reset_index(inplace = True)
 
-ah_products.to_csv(  # write OT
+ah_products.to_csv( 
             'C:/Users/anne.leemans/VSC/AHSpider/ah_ontbijt.csv', sep=';', header=True,
             index=False, encoding='utf-8')
 
